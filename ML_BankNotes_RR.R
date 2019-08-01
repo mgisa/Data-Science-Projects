@@ -1,8 +1,8 @@
 
-# ML PROJECT: ML Based Counterfeit Money Detaction. 
+# ML PROJECT: Machine Learning for Counterfeited Money Detection. 
 # Data used: Banknote_Autentication Dataset 
 # Source: UCI ML Repository/ Kaggle dataset Repository/ ML Data Hub.
-# Written By Mr. Murera Gisa.
+# Written By Mr. Jean de Dieu Murera Gisa.
 #--------------------------------------------------------------
 
 #Step 1: Set working Directory, Load the R Packages/ Libraries and the Dataset to be used
@@ -148,17 +148,12 @@ ntr <- nrow(xytrain)
 nte <- nrow(xytest)
 
 #-----EVALUATION METRICS :MCC METRICS
-
-#---------METHOD 3--------Function with buggs fixed in large products
-
 mcc <- function (actual, predicted)
 {
   # Compute the Matthews correlation coefficient (MCC) score
-  # Murera Gisa 15/05/2019
-  # Geoffrey Anderson 10/14/2016 
+  # Murera Gisa 15/05/2019 
   # Added zero denominator handling.
   # Avoided overflow error on large-ish products in denominator.
-  #
   # actual = vector of true outcomes, 1 = Positive, 0 = Negative
   # predicted = vector of predicted outcomes, 1 = Positive, 0 = Negative
   # function returns MCC
@@ -281,10 +276,6 @@ mcc_adaboost <- mcc(ytest, yhat.adaboost)
 #---------------Discussions-----
 # Computation of True classification rate
 sum(diag(Conf_Mat)/sum(Conf_Mat))
-
-
-
-
 #-----------------------------------------------
 
 # 7. cart (Classification and regression tree)
@@ -336,7 +327,6 @@ wsrf.model <- train(Y~., data = xytrain, method = "wsrf",trControl = trainContro
 yhat.wsrf <- predict(wsrf.model, xtest)
 Conf_Mat <- confusionMatrix(ytest, yhat.wsrf)
 mcc_wsrf <- mcc(ytest, yhat.wsrf)
-
 #-----------------
 
 # 13. QdaCov (Robust Quadratic Discriminant Analysis) Model
@@ -402,9 +392,7 @@ mcc_lvq <- mcc(ytest, yhat.lvq)
 
          #MODELS PERFORMANCE EVALUATION#
 
-
-     #COMPARING MODELS BY mcc, accuracy, kohen,s kappa and logloss
-     
+     # SELECTING OPTIMAL MODEL BY Mathews Correlation Coefficient model performance metrics (mcc) and accuracy, kappa,.....
 #1.  mcc Evaluation metric to check the best model-------
 
 evaluation <- tibble(Ctree = mcc_ctree, C5.0Tree = mcc_c5.0, Naive_Bayes = mcc_naive, KernelKnn = mcc_kknn, Adaboost = mcc_adaboost, CART = mcc_cart, Linda = mcc_linda,"QdaCov" = mcc_Qdacov, wsrf = mcc_wsrf, Lvq = mcc_lvq, SDA = mcc_sda, xrf = mcc_xyf, SLDA = mcc_slda )
@@ -484,36 +472,3 @@ PredictedClass <- validation_label %>% count(Y) %>% mutate(Percent = round(n/sum
 #-------------------------------------------------------------------END--------------------------------------------------
 
 
-library(ROCR) # library(pROC) STUDY AND CHECK
-yhat.pda <- prediction(yhat.pda, ytest) #scores
-summary(yhat.pda)
-
-simple_ROC <- function(labels, scores) {
-  labels<-labels[order(scores, decreasing = TRUE)]
-  data.frame(TPR=cumsum(labels)/sum(labels), FPR= cumsum(!labels)/sum(!labels), labels)
-}
-#--------------------------
-library(tidyverse)
-prob.prediction <- function(yhat.model){
-  as_tibble(yhat.model) %>% mutate(prob=if_else( genuine > forged, genuine, forged)) %>% add_column(ytest= as.numeric(if_else(ytest == "genuine", 0, 1))) 
-}
-#-------------------
-library(caret)
-lda.model <- train(Y~ ., data = xytrain, method = "lda")#, trControl = trainControl(method = "cv", number = 10, returnResamp = "all", classProbs = FALSE, summaryFunction = twoClassSummary), metric = "Accuracy")
-library(ROCR)
-install.packages("pROC")
-library(pROC)
-yhat.lda <- predict(lda.model, xytest, type = "prob")
-head(yhat.lda)
-roc(predictor =yhat.lda$1, response = ytest,levels= rev(levels(ytest)))
-
-
-
-fg<- yhat.lda[xytrain$Y == 0]
-
-
-bg <-yhat.lda[yhat.lda$Y== 1]
-roc <- roc.curve(scores.class0 = fg, scores.class1 = bg, curve = T)
-plot(roc)
-min(as.vector(thisTrh), 1)
-lda_data <- prediction(yhat.lda, ytest)
